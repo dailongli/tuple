@@ -89,15 +89,21 @@ static VALUE tuple_dump_internal(VALUE tuple) {
             header[3] = sign ? len : UCHAR_MAX - len;
             rb_str_cat(data, (char*)&header, sizeof(header));
 
+            ufixnum = (uint64_t)fixnum;
+
+            /* high 32 bits */
             if (len == 2) {
                 digit = split64(ufixnum, 1);
-                digit = htonl(sign ? digit : UINT_MAX - digit);
-                rb_str_cat(data, (char*)&digit, sizeof(digit));
+                if (!sign) digit = UINT32_MAX - digit;
+                digit = htonl(digit);
+                rb_str_cat(data, (char *)&digit, sizeof(digit));
             }
 
+            /* low 32 bits */
             digit = split64(ufixnum, 0);
-            digit = htonl(sign ? digit : UINT_MAX - digit);
-            rb_str_cat(data, (char*)&digit, sizeof(digit));
+            if (!sign) digit = UINT32_MAX - digit;
+            digit = htonl(digit);
+            rb_str_cat(data, (char *)&digit, sizeof(digit));
         }
 
         // if (FIXNUM_P(item)) {   
