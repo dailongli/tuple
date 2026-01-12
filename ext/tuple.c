@@ -1,4 +1,5 @@
 #include "ruby.h"
+#include <stdint.h>
 
 #ifdef _WIN32
   #include <winsock2.h>
@@ -22,7 +23,7 @@ VALUE rb_cDate;
 
 
 static void null_pad(VALUE data, int len) {
-  static u_int8_t null = 0;
+  static uint8_t null = 0;
 
   // Pad with null bytes so subsequent fields will be aligned.
   while (len % 4 != 0) {
@@ -32,8 +33,8 @@ static void null_pad(VALUE data, int len) {
 }
 
 
-u_int32_t split64(int64_t num, int word) {
-  u_int32_t *split = (u_int32_t*)(void*)&num;
+uint32_t split64(int64_t num, int word) {
+  uint32_t *split = (uint32_t*)(void*)&num;
 
   static int i = 1;
   if (*(char *)&i == 1) word = word ? 1: 0;
@@ -56,8 +57,8 @@ static VALUE tuple_dump(VALUE self, VALUE tuple) {
     VALUE data = rb_str_new2("");
     VALUE item;
     int i, j, len, sign, byte_len, padded;
-    u_int8_t header[4];
-    u_int32_t digit;
+    uint8_t header[4];
+    uint32_t digit;
     int64_t fixnum;
     unsigned char *buf;
     uint32_t v;
@@ -196,8 +197,8 @@ static VALUE tuple_parse(void **data, int data_len) {
     void* ptr = *data; *data = &ptr;
     void* end = ptr + data_len;
     int i, len, sign;
-    u_int8_t header[4];
-    u_int32_t digit;
+    uint8_t header[4];
+    uint32_t digit;
 
     while (ptr < end) {
         memcpy(header, ptr, 4);
