@@ -68,10 +68,12 @@ static VALUE tuple_dump_internal(VALUE tuple) {
     if (TYPE(tuple) != T_ARRAY) tuple = rb_ary_new4(1, &tuple);
     for (i = 0; i < RARRAY_LEN(tuple); i++) {
         item = RARRAY_PTR(tuple)[i];
-
         header[0] = header[1] = header[2] = header[3] = 0;
+
         if (FIXNUM_P(item)) {
-            fixnum = FIX2LONG(item);
+            //fixnum = FIX2LONG(item);
+            fixnum = NUM2LL(item);
+
             sign = (fixnum >= 0);
             if (!sign) fixnum = -fixnum;
             len = fixnum > UINT_MAX ? 2 : 1;
@@ -80,9 +82,9 @@ static VALUE tuple_dump_internal(VALUE tuple) {
             rb_str_cat(data, (char*)&header, sizeof(header));      
 
             if (len == 2) {
-            digit = split64(fixnum, 1);
-            digit = htonl(sign ? digit : UINT_MAX - digit);
-            rb_str_cat(data, (char*)&digit, sizeof(digit));
+                digit = split64(fixnum, 1);
+                digit = htonl(sign ? digit : UINT_MAX - digit);
+                rb_str_cat(data, (char*)&digit, sizeof(digit));
             }
             digit = split64(fixnum, 0);
             digit = htonl(sign ? digit : UINT_MAX - digit);
