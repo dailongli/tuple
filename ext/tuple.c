@@ -1,5 +1,10 @@
 #include "ruby.h"
-#include <netinet/in.h>
+
+#ifdef _WIN32
+  #include <winsock2.h>
+#else
+  #include <netinet/in.h>
+#endif
 
 VALUE mTuple;
 VALUE rb_cDate;
