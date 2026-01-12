@@ -70,24 +70,63 @@ static VALUE tuple_dump_internal(VALUE tuple) {
         item = RARRAY_PTR(tuple)[i];
         header[0] = header[1] = header[2] = header[3] = 0;
 
-        if (RB_INTEGER_TYPE_P(item)) {
-            fixnum = rb_num2long(item);
-            sign = (fixnum >= 0);
-            if (!sign) fixnum = -fixnum;
-            len = fixnum > UINT_MAX ? 2 : 1;
-            header[2] = sign ? INTP_SORT : INTN_SORT;
-            header[3] = sign ? len : UCHAR_MAX - len;
-            rb_str_cat(data, (char*)&header, sizeof(header));      
+        // if (RB_INTEGER_TYPE_P(item)) {
+        //     fixnum = rb_num2long(item);
+        //     sign = (fixnum >= 0);
+        //     if (!sign) fixnum = -fixnum;
+        //     len = fixnum > UINT_MAX ? 2 : 1;
+        //     header[2] = sign ? INTP_SORT : INTN_SORT;
+        //     header[3] = sign ? len : UCHAR_MAX - len;
+        //     rb_str_cat(data, (char*)&header, sizeof(header));      
 
-            if (len == 2) {
-                digit = split64(fixnum, 1);
-                digit = htonl(sign ? digit : UINT_MAX - digit);
-                rb_str_cat(data, (char*)&digit, sizeof(digit));
-            }
-            digit = split64(fixnum, 0);
-            digit = htonl(sign ? digit : UINT_MAX - digit);
-            rb_str_cat(data, (char*)&digit, sizeof(digit));
-        } else if (TYPE(item) == T_BIGNUM) { // 数字
+        //     if (len == 2) {
+        //         digit = split64(fixnum, 1);
+        //         digit = htonl(sign ? digit : UINT_MAX - digit);
+        //         rb_str_cat(data, (char*)&digit, sizeof(digit));
+        //     }
+        //     digit = split64(fixnum, 0);
+        //     digit = htonl(sign ? digit : UINT_MAX - digit);
+        //     rb_str_cat(data, (char*)&digit, sizeof(digit));
+        // } 
+if (RB_INTEGER_TYPE_P(item)) {
+    int sign;
+    uint64_t u;
+    uint32_t digit;
+    int len;
+
+    /* 1. Ruby Integer → int64 */
+    int64_t v = NUM2LL(item);
+
+    sign = (v >= 0);
+    if (!sign) {
+        u = (uint64_t)(-v);
+    } else {
+        u = (uint64_t)v;
+    }
+
+    /* 2. 需要几个 32-bit word */
+    len = (u > UINT32_MAX) ? 2 : 1;
+
+    header[2] = sign ? INTP_SORT : INTN_SORT;
+    header[3] = sign ? len : (UCHAR_MAX - len);
+    rb_str_cat(data, (char*)&header, sizeof(header));
+
+    /* 3. 高 32 位 */
+    if (len == 2) {
+        digit = (uint32_t)(u >> 32);
+        if (!sign) digit = ~digit;
+        digit = htonl(digit);
+        rb_str_cat(data, (char*)&digit, 4);
+    }
+
+    /* 4. 低 32 位 */
+    digit = (uint32_t)(u & 0xFFFFFFFF);
+    if (!sign) digit = ~digit;
+    digit = htonl(digit);
+    rb_str_cat(data, (char*)&digit, 4);
+}
+
+        else if (TYPE(item) == T_BIGNUM) { // 数字
             sign = RBIGNUM_SIGN(item);
 
             //len  = RBIGNUM_LEN(item);
