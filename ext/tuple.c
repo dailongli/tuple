@@ -69,27 +69,58 @@ static VALUE tuple_dump_internal(VALUE tuple) {
     for (i = 0; i < RARRAY_LEN(tuple); i++) {
         item = RARRAY_PTR(tuple)[i];
         header[0] = header[1] = header[2] = header[3] = 0;
+         if (FIXNUM_P(item)) {
+            int64_t fixnum;
+            uint64_t ufixnum;
 
-        if (FIXNUM_P(item)) {
-            //fixnum = FIX2LONG(item);
             fixnum = NUM2LL(item);
 
-            sign = (fixnum >= 0);
-            if (!sign) fixnum = -fixnum;
-            len = fixnum > UINT_MAX ? 2 : 1;
+            if (fixnum >= 0) {
+                sign = 1;
+                ufixnum = (uint64_t)fixnum;
+            } else {
+                sign = 0;
+                ufixnum = (uint64_t)(-(fixnum + 1)) + 1;
+            }
+
+            len = ufixnum > UINT_MAX ? 2 : 1;
+
             header[2] = sign ? INTP_SORT : INTN_SORT;
             header[3] = sign ? len : UCHAR_MAX - len;
-            rb_str_cat(data, (char*)&header, sizeof(header));      
+            rb_str_cat(data, (char*)&header, sizeof(header));
 
             if (len == 2) {
-                digit = split64(fixnum, 1);
+                digit = split64(ufixnum, 1);
                 digit = htonl(sign ? digit : UINT_MAX - digit);
                 rb_str_cat(data, (char*)&digit, sizeof(digit));
             }
-            digit = split64(fixnum, 0);
+
+            digit = split64(ufixnum, 0);
             digit = htonl(sign ? digit : UINT_MAX - digit);
             rb_str_cat(data, (char*)&digit, sizeof(digit));
-        } else if (TYPE(item) == T_BIGNUM) { // 数字
+        }
+
+        // if (FIXNUM_P(item)) {   
+        //     //fixnum = FIX2LONG(item);
+        //     fixnum = NUM2LL(item);
+
+        //     sign = (fixnum >= 0);
+        //     if (!sign) fixnum = -fixnum;
+        //     len = fixnum > UINT_MAX ? 2 : 1;
+        //     header[2] = sign ? INTP_SORT : INTN_SORT;
+        //     header[3] = sign ? len : UCHAR_MAX - len;
+        //     rb_str_cat(data, (char*)&header, sizeof(header));      
+
+        //     if (len == 2) {
+        //         digit = split64(fixnum, 1);
+        //         digit = htonl(sign ? digit : UINT_MAX - digit);
+        //         rb_str_cat(data, (char*)&digit, sizeof(digit));
+        //     }
+        //     digit = split64(fixnum, 0);
+        //     digit = htonl(sign ? digit : UINT_MAX - digit);
+        //     rb_str_cat(data, (char*)&digit, sizeof(digit));
+        // } 
+        else if (TYPE(item) == T_BIGNUM) { // 数字
             sign = RBIGNUM_SIGN(item);
 
             //len  = RBIGNUM_LEN(item);
