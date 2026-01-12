@@ -289,6 +289,8 @@ static VALUE tuple_parse(void **data, int data_len) {
     return tuple;
 }
 
+
+
 /*
  * call-seq:
  * Tuple.load(string) -> tuple
@@ -310,5 +312,5 @@ void Init_tuple() {
 
     mTuple = rb_define_module("Tuple");
     rb_define_module_function(mTuple, "dump", RUBY_METHOD_FUNC(tuple_dump), 1);
-    rb_define_module_function(mTuple, "load", RUBY_METHOD_FUNC(tuple_load), 1);
+    rb_define_module_function(mTuple, "load", tuple_load, 1);
 }
