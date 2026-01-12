@@ -71,8 +71,7 @@ static VALUE tuple_dump_internal(VALUE tuple) {
         header[0] = header[1] = header[2] = header[3] = 0;
 
         if (RB_INTEGER_TYPE_P(item)) {
-        //if (FIXNUM_P(item)) {
-            fixnum = FIX2LONG(item);
+            fixnum = rb_num2long(item);
             sign = (fixnum >= 0);
             if (!sign) fixnum = -fixnum;
             len = fixnum > UINT_MAX ? 2 : 1;
@@ -81,36 +80,14 @@ static VALUE tuple_dump_internal(VALUE tuple) {
             rb_str_cat(data, (char*)&header, sizeof(header));      
 
             if (len == 2) {
-            digit = split64(fixnum, 1);
-            digit = htonl(sign ? digit : UINT_MAX - digit);
-            rb_str_cat(data, (char*)&digit, sizeof(digit));
+                digit = split64(fixnum, 1);
+                digit = htonl(sign ? digit : UINT_MAX - digit);
+                rb_str_cat(data, (char*)&digit, sizeof(digit));
             }
             digit = split64(fixnum, 0);
             digit = htonl(sign ? digit : UINT_MAX - digit);
             rb_str_cat(data, (char*)&digit, sizeof(digit));
-        }         
-
-        // if (FIXNUM_P(item)) {   
-        //     //fixnum = FIX2LONG(item);
-        //     fixnum = NUM2LL(item);
-
-        //     sign = (fixnum >= 0);
-        //     if (!sign) fixnum = -fixnum;
-        //     len = fixnum > UINT_MAX ? 2 : 1;
-        //     header[2] = sign ? INTP_SORT : INTN_SORT;
-        //     header[3] = sign ? len : UCHAR_MAX - len;
-        //     rb_str_cat(data, (char*)&header, sizeof(header));      
-
-        //     if (len == 2) {
-        //         digit = split64(fixnum, 1);
-        //         digit = htonl(sign ? digit : UINT_MAX - digit);
-        //         rb_str_cat(data, (char*)&digit, sizeof(digit));
-        //     }
-        //     digit = split64(fixnum, 0);
-        //     digit = htonl(sign ? digit : UINT_MAX - digit);
-        //     rb_str_cat(data, (char*)&digit, sizeof(digit));
-        // } 
-        else if (TYPE(item) == T_BIGNUM) { // 数字
+        } else if (TYPE(item) == T_BIGNUM) { // 数字
             sign = RBIGNUM_SIGN(item);
 
             //len  = RBIGNUM_LEN(item);
