@@ -53,7 +53,9 @@ uint32_t split64(int64_t num, int word) {
  * Dumps an array of simple Ruby types into a string of binary data.
  *
  */
-static VALUE tuple_dump(VALUE self, VALUE tuple) {
+
+
+static VALUE tuple_dump_internal(VALUE tuple) {
     VALUE data = rb_str_new2("");
     VALUE item;
     int i, j, len, sign, byte_len, padded;
@@ -63,7 +65,7 @@ static VALUE tuple_dump(VALUE self, VALUE tuple) {
     unsigned char *buf;
     uint32_t v;
 
-    if (TYPE(tuple) != T_ARRAY) tuple = rb_ary_new4(1, &tuple); // 不是数组转成数组
+    if (TYPE(tuple) != T_ARRAY) tuple = rb_ary_new4(1, &tuple);
     for (i = 0; i < RARRAY_LEN(tuple); i++) {
         item = RARRAY_PTR(tuple)[i];
 
@@ -106,7 +108,6 @@ static VALUE tuple_dump(VALUE self, VALUE tuple) {
             //     digit = htonl(sign ? digits[j] : (UINT_MAX - digits[j]));
             //     rb_str_cat(data, (char*)&digit, sizeof(digit));
             // }
-
 
             /* 3. byte buffer */
             buf = ALLOCA_N(unsigned char, padded);
@@ -167,7 +168,7 @@ static VALUE tuple_dump(VALUE self, VALUE tuple) {
             header[2] = TUPLE_SORT;
             rb_str_cat(data, (char*)&header, sizeof(header));
 
-            rb_str_concat(data, tuple_dump(mTuple, item));
+            rb_str_concat(data, tuple_dump_internal(item));
 
             header[2] = TUPLE_END;
             rb_str_cat(data, (char*)&header, sizeof(header));      
@@ -185,6 +186,12 @@ static VALUE tuple_dump(VALUE self, VALUE tuple) {
         }
     }
     return data;
+}
+
+static VALUE
+tuple_dump(VALUE self, VALUE tuple)
+{
+    return tuple_dump_internal(tuple);
 }
 
 static VALUE empty_bignum(int sign, int len) {
